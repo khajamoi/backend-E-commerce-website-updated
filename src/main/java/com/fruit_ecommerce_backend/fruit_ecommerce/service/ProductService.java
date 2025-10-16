@@ -14,23 +14,26 @@ import lombok.RequiredArgsConstructor;
 @Service
 @RequiredArgsConstructor
 public class ProductService {
-		private final ProductRepository productRepository;
-		
-		
-		public List<Product> listAll(){
-		return productRepository.findAll();
-		}
-		
-		
-		public Optional<Product> findById(Long id){
-		return productRepository.findById(id);
-		}
-		
-		
-		public Product save(Product p){
-		return productRepository.save(p);
-		}
-		
-		
-		public void delete(Long id){ productRepository.deleteById(id); }
+    private final ProductRepository productRepository;
+
+    public List<Product> listAll() {
+        return productRepository.findAll();
+    }
+
+    public Optional<Product> findById(Long id) {
+        return productRepository.findById(id);
+    }
+
+    public Product save(Product p) {
+        return productRepository.save(p);
+    }
+
+    public void delete(Long id) {
+        productRepository.deleteById(id);
+    }
+
+    // Search products by name (case insensitive)
+    public List<Product> searchByName(String name) {
+        return productRepository.findByNameContainingIgnoreCase(name);
+    }
 }

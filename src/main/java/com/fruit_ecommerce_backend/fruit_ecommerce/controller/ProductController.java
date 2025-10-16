@@ -18,10 +18,15 @@ import java.util.stream.Collectors;
 public class ProductController {
     private final ProductService productService;
 
-    // Get all products as DTO with Base64 image
+    // Get all products or search by name
     @GetMapping
-    public ResponseEntity<List<ProductDTO>> list() {
-        List<Product> products = productService.listAll();
+    public ResponseEntity<List<ProductDTO>> list(@RequestParam(required = false) String search) {
+        List<Product> products;
+        if (search != null && !search.isEmpty()) {
+            products = productService.searchByName(search);
+        } else {
+            products = productService.listAll();
+        }
 
         List<ProductDTO> dtoList = products.stream().map(p -> {
             ProductDTO dto = new ProductDTO();
@@ -32,7 +37,6 @@ public class ProductController {
             dto.setStock(p.getStock());
 
             if (p.getImage() != null) {
-                // Convert byte[] to Base64 string for frontend
                 String base64Image = "data:image/jpeg;base64," + Base64.getEncoder().encodeToString(p.getImage());
                 dto.setImageBase64(base64Image);
             }
