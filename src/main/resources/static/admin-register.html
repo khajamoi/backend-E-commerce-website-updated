@@ -1,0 +1,52 @@
+<!doctype html>
+<html>
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Admin Register</title>
+<style>body{font-family:system-ui;margin:2rem;max-width:520px}label{display:block;margin:.5rem 0}.row{margin:.25rem 0}</style>
+</head>
+<body>
+<h2>Admin Register</h2>
+<form id="form">
+<label>Name <input class="row" id="name" required /></label>
+<label>Email <input class="row" type="email" id="email" required /></label>
+<label>Password <input class="row" type="password" id="password" required /></label>
+<button type="submit">Create Admin</button>
+</form>
+<p id="msg"></p>
+
+
+<script>
+const API = '/api/auth/admin/signup';
+const FRONT_ACCEPT = 'http://localhost:5173/auth/accept';
+
+
+document.getElementById('form').addEventListener('submit', async (e) => {
+e.preventDefault();
+const name = document.getElementById('name').value.trim();
+const email = document.getElementById('email').value.trim();
+const password = document.getElementById('password').value;
+const msg = document.getElementById('msg');
+msg.textContent = 'Creating admin…';
+try {
+const res = await fetch(API, {
+method: 'POST',
+headers: { 'Content-Type': 'application/json' },
+body: JSON.stringify({ name, email, password, role: 'ADMIN' })
+});
+if (!res.ok) throw new Error('Registration failed');
+const data = await res.json();
+// data: { token, email, role }
+if (data.role !== 'ADMIN') {
+throw new Error('Unexpected role');
+}
+const url = `${FRONT_ACCEPT}#token=${encodeURIComponent(data.token)}&email=${encodeURIComponent(data.email)}&role=${encodeURIComponent(data.role)}`;
+window.location.replace(url);
+} catch (err) {
+msg.textContent = err.message || 'Registration failed';
+}
+});
+</script>
+</body>
+</html>
