@@ -23,32 +23,47 @@ public class AuthService {
     private final UserRepository userRepository;
     private final PasswordEncoder passwordEncoder;
     private final JwtUtil jwtUtil;
+    private final OtpService otpService;
+    private final EmailService emailService;
 
-    public JwtResponse login(LoginRequest request) {
-        //  1. Authenticate user credentials
+    // STEP 1: Verify credentials and send OTP
+    public String loginStepOne(LoginRequest request) {
         Authentication authentication = authenticationManager.authenticate(
                 new UsernamePasswordAuthenticationToken(request.getEmail(), request.getPassword())
         );
 
         SecurityContextHolder.getContext().setAuthentication(authentication);
 
-        //  2. Fetch user from DB
         User user = userRepository.findByEmail(request.getEmail())
                 .orElseThrow(() -> new RuntimeException("User not found"));
 
-        //  3. Generate token
+        String otp = otpService.generateOtp(user.getEmail());
+        emailService.sendOtpEmail(user.getEmail(), otp);
+
+        return "OTP sent to registered email. Please verify.";
+    }
+
+    // STEP 2: Verify OTP and issue token
+    public JwtResponse verifyOtpAndLogin(String email, String otp) {
+        boolean isValid = otpService.validateOtp(email, otp);
+        if (!isValid) {
+            throw new RuntimeException("Invalid or expired OTP");
+        }
+
+        User user = userRepository.findByEmail(email)
+                .orElseThrow(() -> new RuntimeException("User not found"));
+
         String token = jwtUtil.generateToken(user.getEmail(), user.getRole());
 
-        //  4. Return full user details
         return new JwtResponse(token, user.getId(), user.getName(), user.getEmail(), user.getRole().name());
     }
 
+    // Existing signup (unchanged)
     public JwtResponse signup(SignupRequest request, Role role) {
         if (userRepository.existsByEmail(request.getEmail())) {
             throw new RuntimeException("Email is already taken");
         }
 
-        // ✅ 1. Create new user
         User user = User.builder()
                 .name(request.getName())
                 .email(request.getEmail())
@@ -59,10 +74,7 @@ public class AuthService {
 
         userRepository.save(user);
 
-        // ✅ 2. Generate token
         String token = jwtUtil.generateToken(user.getEmail(), user.getRole());
-
-        //  3. Return full user details so frontend can auto-login
         return new JwtResponse(token, user.getId(), user.getName(), user.getEmail(), user.getRole().name());
     }
 }
