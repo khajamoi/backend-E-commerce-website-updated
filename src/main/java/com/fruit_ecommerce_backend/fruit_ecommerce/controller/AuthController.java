@@ -30,4 +30,5 @@ public class AuthController {
     public ResponseEntity<JwtResponse> signupAdmin(@Valid @RequestBody SignupRequest request) {
     Role role = request.getRole() != null ? request.getRole() : Role.ADMIN;
     return ResponseEntity.ok(authService.signup(request, role));
+    // done
     }}
